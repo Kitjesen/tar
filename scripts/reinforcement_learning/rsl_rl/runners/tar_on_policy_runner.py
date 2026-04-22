@@ -70,9 +70,11 @@ class TAROnPolicyRunner:
         policy_kwargs.setdefault("num_actions", self.env.num_actions)
         policy_kwargs.setdefault("num_hist", num_hist)
         policy_kwargs.setdefault("prop_dim", prop_dim)
+        # Pop runner-level keys that aren't policy __init__ kwargs.
+        # IMPORTANT: num_hist IS a required TAR policy kwarg — do not pop it.
         for k in ("policy_class_name", "algorithm_class_name", "class_name",
                   "num_steps_per_env", "save_interval", "max_iterations",
-                  "experiment_name", "run_name", "obs_groups", "num_hist"):
+                  "experiment_name", "run_name", "obs_groups"):
             policy_kwargs.pop(k, None)
 
         self.actor_critic = TARActorCritic(**policy_kwargs).to(self.device)
