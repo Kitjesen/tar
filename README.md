@@ -1,6 +1,6 @@
-# Thunder Adaptive RL
+# NOVA Dog RL
 
-Terrain-adaptive reinforcement learning for Thunder wheeled-legged quadruped (16 DOF = 12 leg joints + 4 wheel joints). Three architectures compared, all proprioception-only at deployment (no exteroceptive sensors needed on the S100P robot).
+Terrain-adaptive reinforcement learning for **NOVA Dog** (product name) / **Thunder** (internal codename) wheeled-legged quadruped — 16 DOF = 12 leg joints + 4 wheel joints. Three architectures compared, all proprioception-only at deployment (deployed on Horizon S100P board).
 
 ## Architectures
 
@@ -12,7 +12,9 @@ Baseline (existing). 5-10 frame proprioceptive history encoder + SwAV contrastiv
 - **Entry**: `train_him.py`
 
 ### ② TAR — Teacher-Aligned Representations
-Contrastive triplet loss aligning student proprioceptive latent to teacher privileged latent.
+Contrastive-hinge loss aligning student proprioceptive latent to teacher privileged latent via dynamics-predicted next state.
+
+> **⚠️ 状态**: 当前 `tar_*.py` 是根据论文摘要手写的**简化版**（`latent_dims=45`，classic triplet loss）。官方 `ammousa/TARLoco` 实现在 `reference/TARLoco/` 目录下，关键差异见 `docs/TAR_MIGRATION.md`。需要重写以严格复现论文。
 
 - **Paper**: Teacher-Aligned Representations via Contrastive Learning for Quadrupedal Locomotion (arXiv:2503.20839, IROS 2025)
 - **Reported**: -42.2% OOD error, 2× convergence speed vs HIM (on Go2)
