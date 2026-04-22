@@ -1,5 +1,3 @@
-# Copyright (c) 2024-2026 Inovxio (穹沛科技)
-# SPDX-License-Identifier: Apache-2.0
 """PPO runner cfg for thunder_him_gait TerAdapt variant (used by train_teradapt.py).
 
 train_teradapt.py hardcodes TerAdaptActorCritic/TerAdaptPPO/TerAdaptOnPolicyRunner

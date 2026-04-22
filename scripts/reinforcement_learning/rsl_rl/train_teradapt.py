@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2024-2026 Inovxio (穹沛科技)
-# SPDX-License-Identifier: Apache-2.0
 """Train TerAdapt: VQ-VAE terrain codebook + dual-horizon proprio + PPO.
 
 Usage:

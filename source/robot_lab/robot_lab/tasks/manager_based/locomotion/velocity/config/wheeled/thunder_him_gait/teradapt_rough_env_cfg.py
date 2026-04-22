@@ -1,5 +1,3 @@
-# Copyright (c) 2024-2026 Inovxio (穹沛科技)
-# SPDX-License-Identifier: Apache-2.0
 """Thunder Gait TerAdapt rough: short(5) + long(50) history + VQ-VAE TCA."""
 
 import copy

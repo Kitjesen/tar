@@ -1,5 +1,3 @@
-# Copyright (c) 2024-2026 Inovxio (穹沛科技)
-# SPDX-License-Identifier: Apache-2.0
 """TCA: Terrain Codebook Alignment module (VQ-VAE on height_scan)."""
 
 import torch

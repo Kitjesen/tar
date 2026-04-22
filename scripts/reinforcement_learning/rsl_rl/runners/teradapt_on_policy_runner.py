@@ -1,5 +1,3 @@
-# Copyright (c) 2024-2026 Inovxio (穹沛科技)
-# SPDX-License-Identifier: Apache-2.0
 """TerAdaptOnPolicyRunner - runs TerAdapt training loop.
 
 Extracts 5 groups from obs_dict:

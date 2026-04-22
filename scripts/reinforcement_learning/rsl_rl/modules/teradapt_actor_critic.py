@@ -1,5 +1,3 @@
-# Copyright (c) 2024-2026 Inovxio (穹沛科技)
-# SPDX-License-Identifier: Apache-2.0
 """TerAdaptActorCritic - dual-horizon proprio + TCA + policy/critic.
 
 Independent from him_/tar_ codebases. TerAdapt (IEEE RA-L 2026, arXiv:2510) core:
