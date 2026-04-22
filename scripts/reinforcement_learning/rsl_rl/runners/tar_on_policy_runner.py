@@ -31,6 +31,9 @@ class TAROnPolicyRunner:
         self.env = env
 
         obs = self.env.get_observations()
+        # Isaac Lab RslRlVecEnvWrapper returns (obs, extras) tuple in newer versions
+        if isinstance(obs, tuple):
+            obs = obs[0]
         self.obs_groups = train_cfg.get("obs_groups", None) or self.cfg.get("obs_groups", None) or {
             "policy": ["policy"],
             "critic": ["critic", "height_scan_group"],
@@ -38,11 +41,12 @@ class TAROnPolicyRunner:
         self.policy_groups = self.obs_groups["policy"]
         self.critic_groups = self.obs_groups["critic"]
 
-        if isinstance(obs, dict):
+        # dict-like (plain dict or TensorDict with .keys())
+        if hasattr(obs, "keys"):
             actor_obs_dim = sum(obs[g].shape[1] for g in self.policy_groups if g in obs)
             critic_obs_dim = sum(obs[g].shape[1] for g in self.critic_groups if g in obs)
         else:
-            raise ValueError("TAR official runner expects dict obs")
+            raise ValueError(f"TAR runner expects dict/TensorDict obs; got {type(obs).__name__}")
 
         self.num_actor_obs = actor_obs_dim
         self.num_critic_obs = critic_obs_dim
@@ -122,6 +126,8 @@ class TAROnPolicyRunner:
             )
 
         obs_dict = self.env.get_observations()
+        if isinstance(obs_dict, tuple):
+            obs_dict = obs_dict[0]
         obs, critic_obs = self._extract(obs_dict)
         obs = obs.to(self.device)
         critic_obs = critic_obs.to(self.device)

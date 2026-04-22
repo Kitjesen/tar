@@ -30,6 +30,9 @@ class TerAdaptOnPolicyRunner:
         self.env = env
 
         obs = self.env.get_observations()
+        # Isaac Lab RslRlVecEnvWrapper returns (obs, extras) tuple in newer versions
+        if isinstance(obs, tuple):
+            obs = obs[0]
 
         # obs_groups
         self.obs_groups = train_cfg.get("obs_groups", None) or self.cfg.get("obs_groups", None) or {
@@ -45,16 +48,17 @@ class TerAdaptOnPolicyRunner:
         self.height_scan_groups = self.obs_groups["height_scan"]
         self.vel_groups = self.obs_groups["vel"]
 
-        # Extract initial obs to infer dims
-        if isinstance(obs, dict):
+        # Extract initial obs to infer dims (dict or TensorDict supported)
+        if hasattr(obs, "keys"):
             short_obs_dim = sum(obs[g].shape[1] for g in self.policy_short_groups if g in obs)
             long_obs_dim = sum(obs[g].shape[1] for g in self.policy_long_groups if g in obs)
             critic_obs_dim = sum(obs[g].shape[1] for g in self.critic_groups if g in obs)
             height_scan_dim = sum(obs[g].shape[1] for g in self.height_scan_groups if g in obs)
             vel_dim = sum(obs[g].shape[1] for g in self.vel_groups if g in obs)
         else:
-            # obs is a TensorDict or tensor; fall back
-            raise ValueError("TerAdapt runner expects dict-style obs; got a tensor.")
+            raise ValueError(
+                f"TerAdapt runner expects dict/TensorDict obs; got {type(obs).__name__}"
+            )
 
         self.num_short_obs = short_obs_dim
         self.num_long_obs = long_obs_dim
@@ -153,14 +157,19 @@ class TerAdaptOnPolicyRunner:
 
     def _extract_observations(self, obs_dict):
         """Return (short_obs, long_obs, critic_obs, height_scan, vel_gt)."""
-        if isinstance(obs_dict, dict):
-            short_obs = torch.cat([obs_dict[g] for g in self.policy_short_groups], dim=1)
-            long_obs = torch.cat([obs_dict[g] for g in self.policy_long_groups], dim=1)
-            critic_obs = torch.cat([obs_dict[g] for g in self.critic_groups], dim=1)
-            height_scan = torch.cat([obs_dict[g] for g in self.height_scan_groups], dim=1)
-            vel_gt = torch.cat([obs_dict[g] for g in self.vel_groups], dim=1)
-        else:
-            raise ValueError("TerAdapt runner expects dict-style obs.")
+        # Unwrap (obs, extras) tuple if wrapper returned one
+        if isinstance(obs_dict, tuple):
+            obs_dict = obs_dict[0]
+        # Accept dict or TensorDict
+        if not hasattr(obs_dict, "keys"):
+            raise ValueError(
+                f"TerAdapt runner expects dict/TensorDict obs; got {type(obs_dict).__name__}"
+            )
+        short_obs = torch.cat([obs_dict[g] for g in self.policy_short_groups], dim=1)
+        long_obs = torch.cat([obs_dict[g] for g in self.policy_long_groups], dim=1)
+        critic_obs = torch.cat([obs_dict[g] for g in self.critic_groups], dim=1)
+        height_scan = torch.cat([obs_dict[g] for g in self.height_scan_groups], dim=1)
+        vel_gt = torch.cat([obs_dict[g] for g in self.vel_groups], dim=1)
         return short_obs, long_obs, critic_obs, height_scan, vel_gt
 
     # ---- main training loop ----
@@ -171,6 +180,8 @@ class TerAdaptOnPolicyRunner:
                 self.env.episode_length_buf, high=int(self.env.max_episode_length)
             )
         obs_dict = self.env.get_observations()
+        if isinstance(obs_dict, tuple):
+            obs_dict = obs_dict[0]
         short_obs, long_obs, critic_obs, height_scan, vel_gt = self._extract_observations(obs_dict)
         short_obs, long_obs, critic_obs = short_obs.to(self.device), long_obs.to(self.device), critic_obs.to(self.device)
         height_scan, vel_gt = height_scan.to(self.device), vel_gt.to(self.device)
