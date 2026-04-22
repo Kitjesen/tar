@@ -35,11 +35,12 @@ Follows TARLoco's `TarMlpGo1LocomotionVelocityRoughEnvCfg`:
   ```
 
 ### Training
-- **Single stage end-to-end PPO** (no teacher pretraining). TAR contrastive loss is applied concurrently.
-- **max_iterations = 7500** (paper reports TAR converges around iter 7500; HIM baseline needs 12500-17500)
-- **Adaptive KL** schedule (`desired_kl=0.01`), Adam optimizer
-- **num_learning_epochs=5, num_mini_batches=4, num_steps_per_env=48** (TARLoco defaults)
-- **γ=0.998, λ=0.95**
+- **Single stage end-to-end PPO** (no teacher pretraining). TAR contrastive loss applied concurrently.
+- **max_iterations = 200** (smoke-test current default; TARLoco official Go1 uses 1500)
+- **num_steps_per_env=24, num_learning_epochs=5, num_mini_batches=4** (TARLoco Go1RoughPpoRunnerCfg)
+- **γ=0.99, λ=0.95, entropy_coef=0.01, desired_kl=0.01** (TARLoco `tar_algo_cfg`)
+- **empirical_normalization=True** (obs whitening)
+- Adam optimizer, adaptive KL schedule, lr_max=1e-3
 
 ### Terrain
 Thunder uses its native rough terrain inherited from `thunder_gait`. TARLoco paper used `ROUGH_TERRAINS_CFG` which includes `random_tracks` (railway tracks 50%) — this terrain type doesn't translate well to wheeled-legged robots (wheels roll over rails very differently than legs step over them), so we keep Thunder's original curriculum. Domain randomization matches paper: friction [0.1, 3.0], payload [-2, 10] kg.
@@ -97,7 +98,7 @@ CUDA_VISIBLE_DEVICES=2 python scripts/reinforcement_learning/rsl_rl/train_terada
     --task GaitTerRough --num_envs 4096 --headless
 ```
 
-Each training takes ~8-12 hours on RTX 3090 (4096 envs; TAR 7500 iter, HIM/TerAdapt 20000 iter).
+Each training takes ~8-12 hours on RTX 3090 (4096 envs; TAR 200-1500 iter for smoke/full, HIM/TerAdapt 20000 iter baseline).
 
 ## Architecture Details
 
@@ -106,12 +107,12 @@ Each training takes ~8-12 hours on RTX 3090 (4096 envs; TAR 7500 iter, HIM/TerAd
 
 ### TAR — Paper-accurate TARLoco port
 ```
-encoder_actor:   proprio_history[10×57=570] → MLP[256,128,64] → z_a[20]
-encoder_critic:  critic_obs              → MLP[256,128,64] → z_c[20]
-trans:           [z_a, action]           → MLP[32]         → z_a_next[20]
-vel_estimator:   cat(z_a, hist_short[4×57=228])[248] → MLP[64,32] → v̂[3]
-Actor:  cat(prop[57], z_a.detach()[20], v̂.detach()[3])[80] → MLP[256,128,128] → action[16]
-Critic: cat(prop[57], z_c[20], vel_priv[3])[80]            → MLP[512,256,256] → value
+encoder_actor:   proprio_history[10×57=570] → MLP[256,128,64] → z_a[45]
+encoder_critic:  critic_obs              → MLP[256,128,64] → z_c[45]
+trans:           [z_a, action]           → MLP[64]         → z_a_next[45]
+vel_estimator:   cat(z_a, hist_short[4×57=228])[273] → MLP[64,32] → v̂[3]
+Actor:  cat(prop[57], z_a.detach()[45], v̂.detach()[3])[105] → MLP[512,256,128] → action[16]
+Critic: cat(prop[57], z_c[45], vel_priv[3])[105]            → MLP[512,256,128] → value
 
 Losses:
   L_tar = ‖next_z_c − trans(z_a, a)‖²_sum.mean()                       # positive

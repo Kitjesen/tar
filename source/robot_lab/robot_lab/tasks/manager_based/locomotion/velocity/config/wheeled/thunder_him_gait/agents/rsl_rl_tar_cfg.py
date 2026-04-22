@@ -1,4 +1,6 @@
-# PPO runner cfg for thunder_him_gait TAR variant (paper-accurate TARLoco port).
+# PPO runner cfg for thunder_him_gait TAR variant.
+# Matches ammousa/TARLoco `Go1RoughPpoTarRunnerCfg` + `tar_algo_cfg` exactly.
+# Reference: reference/TARLoco/exts/tarloco/tasks/agents/rsl_rl_cfg.py lines 109-146.
 
 from isaaclab.utils import configclass
 from isaaclab_rl.rsl_rl import (
@@ -10,20 +12,14 @@ from isaaclab_rl.rsl_rl import (
 
 @configclass
 class ThunderGaitTarRoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
-    """Paper-accurate TAR training config.
+    """Paper-accurate TAR training config — mirrors TARLoco Go1RoughPpoTarRunnerCfg."""
 
-    Matches ammousa/TARLoco settings:
-      - actor [256, 128, 128], critic [512, 256, 256]
-      - num_learning_epochs=5, num_mini_batches=4
-      - max_iterations=7500 (paper: TAR converges ~7500 iter vs HIM 12500-17500)
-      - single-stage end-to-end PPO (no teacher pretraining)
-    """
-
-    num_steps_per_env = 48
-    max_iterations = 7500
-    save_interval = 500
+    num_steps_per_env = 24                        # TARLoco Go1RoughPpoRunnerCfg
+    max_iterations = 200                          # smoke-test; official Go1 uses 1500
+    save_interval = 100                           # TARLoco default
     experiment_name = "thunder_gait_tar_rough"
-    class_name = "OnPolicyRunner"  # train_tar.py overrides to TAROnPolicyRunner
+    empirical_normalization = True                # TARLoco uses obs whitening
+    class_name = "OnPolicyRunner"                 # train_tar.py swaps in TAROnPolicyRunner
     obs_groups = {
         "policy": ["policy"],
         "critic": ["critic", "height_scan_group"],
@@ -33,25 +29,25 @@ class ThunderGaitTarRoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     load_run = ".*"
     load_checkpoint = "model_.*.pt"
 
-    # TARLoco dims: actor [256,128,128], critic [512,256,256]
+    # Actor/Critic dims: [512, 256, 128] (TARLoco Go1RoughPpoTarRunnerCfg policy override)
     policy = RslRlPpoActorCriticCfg(
         init_noise_std=1.0,
-        actor_hidden_dims=[256, 128, 128],
-        critic_hidden_dims=[512, 256, 256],
+        actor_hidden_dims=[512, 256, 128],
+        critic_hidden_dims=[512, 256, 128],
         activation="elu",
     )
 
-    # PPO hyperparameters from TARLoco defaults
+    # TARLoco `tar_algo_cfg`
     algorithm = RslRlPpoAlgorithmCfg(
         value_loss_coef=1.0,
         use_clipped_value_loss=True,
         clip_param=0.2,
-        entropy_coef=0.0,        # TARLoco default
-        num_learning_epochs=5,    # TARLoco default
-        num_mini_batches=4,       # TARLoco default
-        learning_rate=1.0e-3,
+        entropy_coef=0.01,                        # TARLoco actual: 0.01 (not 0.0)
+        num_learning_epochs=5,
+        num_mini_batches=4,
+        learning_rate=1.0e-3,                     # lr_max; lr_min=5e-5 not exposed in rsl_rl
         schedule="adaptive",
-        gamma=0.998,              # TARLoco default (not 0.99)
+        gamma=0.99,                               # TARLoco actual: 0.99 (not 0.998)
         lam=0.95,
         desired_kl=0.01,
         max_grad_norm=1.0,

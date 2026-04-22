@@ -61,16 +61,16 @@ class TARActorCritic(nn.Module):
         num_critic_obs: int,         # full critic dim per timestep (e.g., 60 + height_scan etc.)
         num_actions: int,            # 16 for Thunder
         num_hist: int,               # actor history length (e.g., 10)
-        num_hist_short: int = 4,     # short history for vel estimator (official default)
-        latent_dims: int = 20,       # official z_dim
-        prop_dim: int = 57,          # proprio per-frame dim (Thunder)
+        num_hist_short: int = 4,     # short history for vel estimator (TARLoco default)
+        latent_dims: int = 45,       # TARLoco Go1 TAR MLP actual (override of class default 20)
+        prop_dim: int = 57,          # proprio per-frame dim (Thunder 16 DOF)
         critic_vel_slice: tuple = (0, 3),    # slice of base_lin_vel in critic obs
         critic_prop_slice: tuple = (3, 60),  # slice of proprio in critic obs (Thunder 57 dims)
-        actor_hidden_dims: list = [256, 128, 128],
-        critic_hidden_dims: list = [512, 256, 256],
+        actor_hidden_dims: list = [512, 256, 128],   # TARLoco Go1 TAR MLP actual
+        critic_hidden_dims: list = [512, 256, 128],  # TARLoco Go1 TAR MLP actual
         mlp_encoder_dims: list = [256, 128, 64],
         vel_encoder_dims: list = [64, 32],
-        trans_hidden_dims: list = [32],
+        trans_hidden_dims: list = [64],              # TARLoco Go1 TAR MLP actual
         activation: str = "elu",
         init_noise_std: float = 1.0,
         clip_action: float = 100.0,
