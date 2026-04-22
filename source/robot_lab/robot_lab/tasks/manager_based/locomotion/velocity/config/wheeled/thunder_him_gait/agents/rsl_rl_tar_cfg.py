@@ -15,7 +15,7 @@ class ThunderGaitTarRoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     """Paper-accurate TAR training config — mirrors TARLoco Go1RoughPpoTarRunnerCfg."""
 
     num_steps_per_env = 24                        # TARLoco Go1RoughPpoRunnerCfg
-    max_iterations = 200                          # smoke-test; official Go1 uses 1500
+    max_iterations = 1500                         # TARLoco official Go1 default
     save_interval = 100                           # TARLoco default
     experiment_name = "thunder_gait_tar_rough"
     empirical_normalization = True                # TARLoco uses obs whitening
