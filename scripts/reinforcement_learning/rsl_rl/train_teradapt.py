@@ -65,6 +65,8 @@ from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper
 from isaaclab_tasks.utils import get_checkpoint_path
 from isaaclab_tasks.utils.hydra import hydra_task_config
 
+import robot_lab.tasks  # noqa: F401 -- triggers gym.register for GaitTerRough
+
 # Our TerAdapt runner
 from runners.teradapt_on_policy_runner import TerAdaptOnPolicyRunner
 
