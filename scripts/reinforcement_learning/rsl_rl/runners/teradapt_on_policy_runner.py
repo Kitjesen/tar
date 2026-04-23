@@ -188,6 +188,7 @@ class TerAdaptOnPolicyRunner:
         self.alg.train_mode()
         start_iter = self.current_learning_iteration
         tot_iter = start_iter + num_learning_iterations
+        ep_log_buf: dict[str, list[float]] = {}
 
         for it in range(start_iter, tot_iter):
             start = time.time()
@@ -213,6 +214,13 @@ class TerAdaptOnPolicyRunner:
                     self.cur_episode_length[new_ids] = 0
                     short_obs, long_obs, critic_obs = next_short, next_long, next_critic
                     height_scan, vel_gt = next_hscan, next_vel
+                    # Collect Isaac Lab extras["log"] — Curriculum/terrain_levels,
+                    # Episode_Reward/*, Episode_Termination/*, etc.
+                    log = extras.get("log") if isinstance(extras, dict) else None
+                    if log:
+                        for k, v in log.items():
+                            val = v.item() if hasattr(v, "item") else float(v)
+                            ep_log_buf.setdefault(k, []).append(val)
                 stop = time.time()
                 collect_time = stop - start
                 start = stop
@@ -243,8 +251,10 @@ class TerAdaptOnPolicyRunner:
                 "vq_commit": mean_vq_commit,
                 "rewbuffer": self.rewbuffer,
                 "lenbuffer": self.lenbuffer,
+                "ep_log": ep_log_buf,
             }
             self.log(locs)
+            ep_log_buf = {}
 
             if (it + 1) % self.cfg["save_interval"] == 0 or it == tot_iter - 1:
                 self.save(os.path.join(self.log_dir, f"model_{it+1}.pt"))
@@ -266,6 +276,17 @@ class TerAdaptOnPolicyRunner:
             self.writer.add_scalar("Performance/total_fps", fps, locs["it"])
             self.writer.add_scalar("Train/mean_reward", mean_rew, locs["it"])
             self.writer.add_scalar("Train/mean_episode_length", mean_len, locs["it"])
+            # Isaac Lab curriculum / episode-reward / termination breakdown
+            ep_log = locs.get("ep_log") or {}
+            for k, values in ep_log.items():
+                if not values:
+                    continue
+                self.writer.add_scalar(k, sum(values) / len(values), locs["it"])
+
+        # Pull a couple of curriculum scalars for the stdout tail (main one: terrain_levels)
+        ep_log = locs.get("ep_log") or {}
+        terr = ep_log.get("Curriculum/terrain_levels") or ep_log.get("Metrics/terrain_levels")
+        terr_str = f"  terr={sum(terr)/len(terr):.2f}" if terr else ""
 
         print("=" * width)
         print(
@@ -274,7 +295,7 @@ class TerAdaptOnPolicyRunner:
             f"val={locs['value_loss']:.3f}  sur={locs['surrogate_loss']:.3f}  "
             f"tok={locs['tok_loss']:.3f}  vel={locs['vel_loss']:.3f}  "
             f"vq_rec={locs['vq_recon']:.3f}  vq_com={locs['vq_commit']:.3f}  "
-            f"rew={mean_rew:.2f}  len={mean_len:.1f}"
+            f"rew={mean_rew:.2f}  len={mean_len:.1f}{terr_str}"
         )
 
     def save(self, path: str, infos: Optional[dict] = None):

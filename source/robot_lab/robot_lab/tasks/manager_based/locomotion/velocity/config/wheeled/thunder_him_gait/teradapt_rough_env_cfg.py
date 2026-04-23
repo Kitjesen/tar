@@ -57,5 +57,57 @@ class ThunderGaitTerAdaptRoughEnvCfg(ThunderGaitRoughEnvCfg):
         # GT velocity target for vel_head MSE supervision
         self.observations.vel_gt = VelGtCfg()
 
+        # --- Reward weight fixes (applied BEFORE disable_zero_weight_rewards) ---
+        # DEBUG: dump all reward attribute names + weights so we see what's actually there
+        print("\n[TerAdapt env __post_init__] Reward audit BEFORE fixes:")
+        for _name in sorted(dir(self.rewards)):
+            if _name.startswith("__"):
+                continue
+            _r = getattr(self.rewards, _name)
+            if _r is None:
+                print(f"  {_name:35s} = None")
+                continue
+            if callable(_r):
+                continue
+            _w = getattr(_r, "weight", "<no weight attr>")
+            print(f"  {_name:35s} weight={_w}")
+
+        # joint_mirror was severely under-weighted (-0.01 vs raw error ~60).
+        if hasattr(self.rewards, "joint_mirror") and self.rewards.joint_mirror is not None:
+            self.rewards.joint_mirror.weight = -0.05
+            print(f"[TerAdapt] SET joint_mirror.weight = {self.rewards.joint_mirror.weight}")
+        else:
+            print("[TerAdapt] joint_mirror NOT FOUND or None")
+
+        # hip_pos_penalty
+        if hasattr(self.rewards, "hip_pos_penalty") and self.rewards.hip_pos_penalty is not None:
+            self.rewards.hip_pos_penalty.weight = -3.0
+            print(f"[TerAdapt] SET hip_pos_penalty.weight = {self.rewards.hip_pos_penalty.weight}")
+        else:
+            print("[TerAdapt] hip_pos_penalty NOT FOUND or None — needs full reconstruction")
+            # Try to reconstruct the term directly
+            try:
+                from isaaclab.managers import RewardTermCfg as RewTerm, SceneEntityCfg
+                import robot_lab.tasks.manager_based.locomotion.velocity.mdp as mdp
+                self.rewards.hip_pos_penalty = RewTerm(
+                    func=mdp.joint_pos_penalty,
+                    weight=-3.0,
+                    params={
+                        "command_name": "base_velocity",
+                        "asset_cfg": SceneEntityCfg("robot", joint_names=[".*_hip_joint"]),
+                        "stand_still_scale": 3.0,
+                        "velocity_threshold": 0.05,
+                        "command_threshold": 0.1,
+                    },
+                )
+                print(f"[TerAdapt] RECONSTRUCTED hip_pos_penalty with weight={self.rewards.hip_pos_penalty.weight}")
+            except Exception as e:
+                print(f"[TerAdapt] hip_pos_penalty reconstruction FAILED: {e}")
+
         # Parent only disables zero-weight rewards when class name matches exactly
         self.disable_zero_weight_rewards()
+
+        # Verify after disable
+        jm = getattr(self.rewards, "joint_mirror", None)
+        hp = getattr(self.rewards, "hip_pos_penalty", None)
+        print(f"[TerAdapt] AFTER disable: joint_mirror={jm.weight if jm else None}  hip_pos_penalty={hp.weight if hp else None}\n")
