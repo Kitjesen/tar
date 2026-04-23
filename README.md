@@ -1,11 +1,5 @@
-# TAR · Terrain-Adaptive RL for Thunder Quadruped
+# Terrain-Adaptive RL
 
-[![Paper: TAR (IROS 2025)](https://img.shields.io/badge/Paper-arXiv:2503.20839-9cf.svg)](https://arxiv.org/abs/2503.20839)
-[![Paper: TerAdapt (RA-L 2026)](https://img.shields.io/badge/Paper-IEEE%20RA--L%202026-blue.svg)](#)
-[![Robot: Thunder 16DOF](https://img.shields.io/badge/Robot-Thunder%2016DOF-orange.svg)](#)
-[![Isaac Lab 0.46](https://img.shields.io/badge/IsaacLab-0.46.2-lightgrey.svg)](https://github.com/isaac-sim/IsaacLab)
-
-Training & comparison of **proprioception-only terrain adaptation** for **Thunder** wheeled-legged quadruped (16 DOF = 12 leg + 4 wheel). Deployed on Horizon S100P board.
 
 ## Architectures
 
