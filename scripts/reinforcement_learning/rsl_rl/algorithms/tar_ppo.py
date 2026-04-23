@@ -1,4 +1,4 @@
-"""PPO for TAR official — adds TAR contrastive-hinge aux loss."""
+"""PPO for the current TAR MLP variant with TAR auxiliary losses."""
 
 from __future__ import annotations
 from typing import Tuple
@@ -40,12 +40,14 @@ class TARPPO:
         self.device = device
         self.desired_kl = desired_kl
         self.schedule = schedule
-        self.learning_rate = learning_rate
+        self.min_learning_rate = 5.0e-5
+        self.max_learning_rate = 1.0e-3
+        self.learning_rate = min(max(learning_rate, self.min_learning_rate), self.max_learning_rate)
         self.num_envs = num_envs
 
         self.actor_critic = actor_critic.to(self.device)
         self.storage: TARRolloutStorage | None = None
-        self.optimizer = optim.Adam(self.actor_critic.parameters(), lr=learning_rate)
+        self.optimizer = optim.Adam(self.actor_critic.parameters(), lr=self.learning_rate)
         self.transition = TARRolloutStorage.Transition()
 
         self.clip_param = clip_param
@@ -60,7 +62,10 @@ class TARPPO:
         self.tar_coef = tar_coef
         self.vel_coef = vel_coef
 
-        print(f"\n[TAR] PPO initialized: tar_coef={tar_coef}, vel_coef={vel_coef}")
+        print(
+            f"\n[TAR] PPO initialized: tar_coef={tar_coef}, vel_coef={vel_coef}, "
+            f"lr_range=[{self.min_learning_rate}, {self.max_learning_rate}]"
+        )
 
     def init_storage(self, num_envs, num_transitions_per_env, obs_shape, critic_obs_shape, actions_shape):
         self.storage = TARRolloutStorage(
@@ -136,9 +141,9 @@ class TARPPO:
                         dim=-1,
                     ).mean()
                     if kl > self.desired_kl * 2.0:
-                        self.learning_rate = max(1e-5, self.learning_rate / 1.5)
+                        self.learning_rate = max(self.min_learning_rate, self.learning_rate / 1.5)
                     elif kl < self.desired_kl / 2.0 and kl > 0.0:
-                        self.learning_rate = min(1e-2, self.learning_rate * 1.5)
+                        self.learning_rate = min(self.max_learning_rate, self.learning_rate * 1.5)
                     for pg in self.optimizer.param_groups:
                         pg["lr"] = self.learning_rate
 
