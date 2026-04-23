@@ -1,15 +1,18 @@
-"""TARActorCritic — paper-accurate port of TARLoco for Thunder (16 DOF).
+"""TARActorCritic for the current Thunder TAR MLP variant.
 
-Reproduces ActorCriticTar from ammousa/TARLoco/exts/tarloco/learning/modules/ac_tar.py
-faithfully, with Thunder-specific obs layout.
+This module implements the fixed-window MLP actor/critic path currently used in
+this repository. It borrows the TAR auxiliary-loss structure from TARLoco and
+adapts the observation slicing to Thunder's 16-DOF layout.
 
-Architecture (matches official):
-  encoder:        MLP(actor_obs = hist_len*prop_dim → hidden [256,128,64] → latent 20)
-  encoder_critic: MLP(critic_obs → hidden [256,128,64] → latent 20)
-  trans:          MLP(latent + action → hidden [32] → latent 20)      # dynamics
-  vel_estimator:  MLP(latent + hist_short*prop_dim → hidden [64,32] → 3)
-  actor:          MLP(prop_current + latent + 3 → hidden [256,128,128] → action)
-  critic:         MLP(prop_current + latent + 3 → hidden [512,256,256] → 1)
+This is not the recurrent TAR student from the paper's main LSTM-based setup.
+
+Architecture (current repo defaults):
+  encoder:        MLP(actor_obs = hist_len*prop_dim -> hidden [256,128,64] -> latent 45)
+  encoder_critic: MLP(critic_obs -> hidden [256,128,64] -> latent 45)
+  trans:          MLP(latent + action -> hidden [64] -> latent 45)
+  vel_estimator:  MLP(latent + hist_short*prop_dim -> hidden [64,32] -> 3)
+  actor:          MLP(prop_current + latent + 3 -> hidden [512,256,128] -> action)
+  critic:         MLP(prop_current + latent + 3 -> hidden [512,256,128] -> 1)
 
 Inputs:
   observations (actor view): [B, hist_len, prop_dim=57] flattened to [B, hist_len*57]
@@ -51,7 +54,7 @@ def _mlp(in_dim: int, hidden: list, out_dim: int, activation: str = "elu") -> nn
 
 
 class TARActorCritic(nn.Module):
-    """Paper-accurate TAR actor-critic (port of TARLoco ActorCriticTar)."""
+    """TAR MLP actor-critic used by the current Thunder training stack."""
 
     is_recurrent = False
 
@@ -61,16 +64,16 @@ class TARActorCritic(nn.Module):
         num_critic_obs: int,         # full critic dim per timestep (e.g., 60 + height_scan etc.)
         num_actions: int,            # 16 for Thunder
         num_hist: int,               # actor history length (e.g., 10)
-        num_hist_short: int = 4,     # short history for vel estimator (TARLoco default)
-        latent_dims: int = 45,       # TARLoco Go1 TAR MLP actual (override of class default 20)
+        num_hist_short: int = 4,     # short history for vel estimator (repo default)
+        latent_dims: int = 45,       # current repo default
         prop_dim: int = 57,          # proprio per-frame dim (Thunder 16 DOF)
         critic_vel_slice: tuple = (0, 3),    # slice of base_lin_vel in critic obs
         critic_prop_slice: tuple = (3, 60),  # slice of proprio in critic obs (Thunder 57 dims)
-        actor_hidden_dims: list = [512, 256, 128],   # TARLoco Go1 TAR MLP actual
-        critic_hidden_dims: list = [512, 256, 128],  # TARLoco Go1 TAR MLP actual
+        actor_hidden_dims: list = [512, 256, 128],
+        critic_hidden_dims: list = [512, 256, 128],
         mlp_encoder_dims: list = [256, 128, 64],
         vel_encoder_dims: list = [64, 32],
-        trans_hidden_dims: list = [64],              # TARLoco Go1 TAR MLP actual
+        trans_hidden_dims: list = [64],
         activation: str = "elu",
         init_noise_std: float = 1.0,
         clip_action: float = 100.0,
@@ -110,7 +113,7 @@ class TARActorCritic(nn.Module):
         # --- Dynamics (trans) ---
         self.trans = _mlp(latent_dims + num_actions, trans_hidden_dims, latent_dims, activation)
 
-        # --- Velocity estimator: cat(z, hist_short_flat) → 3 ---
+        # --- Velocity estimator: cat(z, hist_short_flat) -> 3 ---
         self.vel_estimator = _mlp(
             latent_dims + prop_dim * num_hist_short,
             vel_encoder_dims,
@@ -118,7 +121,7 @@ class TARActorCritic(nn.Module):
             activation,
         )
 
-        # --- Actor: cat(prop_current, z, vel) → action ---
+        # --- Actor: cat(prop_current, z, vel) -> action ---
         actor_in_dim = prop_dim + latent_dims + 3
         self.actor = _mlp(actor_in_dim, actor_hidden_dims, num_actions, activation)
         self.critic = _mlp(actor_in_dim, critic_hidden_dims, 1, activation)
