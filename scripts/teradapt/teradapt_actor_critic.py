@@ -21,7 +21,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Normal
 
-from modules.teradapt_tca import TCAModule, get_activation, _build_mlp
+from teradapt.teradapt_tca import TCAModule, get_activation, _build_mlp
 
 
 class Long1DCNN(nn.Module):

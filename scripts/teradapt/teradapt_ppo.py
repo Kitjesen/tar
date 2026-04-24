@@ -8,8 +8,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from modules.teradapt_actor_critic import TerAdaptActorCritic
-from storage.teradapt_rollout_storage import TerAdaptRolloutStorage
+from teradapt.teradapt_actor_critic import TerAdaptActorCritic
+from teradapt.teradapt_rollout_storage import TerAdaptRolloutStorage
 
 
 class TerAdaptPPO:

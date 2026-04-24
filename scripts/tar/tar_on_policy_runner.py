@@ -11,8 +11,8 @@ from typing import Optional
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from algorithms.tar_ppo import TARPPO
-from modules.tar_actor_critic import TARActorCritic
+from tar.tar_ppo import TARPPO
+from tar.tar_actor_critic import TARActorCritic
 
 
 class TAROnPolicyRunner:

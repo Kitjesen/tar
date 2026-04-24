@@ -15,8 +15,8 @@ from typing import Optional
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from algorithms.teradapt_ppo import TerAdaptPPO
-from modules.teradapt_actor_critic import TerAdaptActorCritic
+from teradapt.teradapt_ppo import TerAdaptPPO
+from teradapt.teradapt_actor_critic import TerAdaptActorCritic
 
 
 class TerAdaptOnPolicyRunner:
