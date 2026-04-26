@@ -1,24 +1,16 @@
-# Thunder Gait HIM family - rough-terrain RL tasks with different architectures.
+# Thunder gait task registrations for methods that are present in this repository.
 #
 # Tasks:
-#   GaitHimRough:  baseline HIM (SwAV), uses existing HIMActorCritic + train_him.py
-#   GaitTarRough:  paper-accurate TARLoco port (contrastive hinge + encoder_critic)
-#   GaitTerRough:  TerAdapt (VQ-VAE codebook alignment)
+#   GaitTarRough: current TAR MLP variant adapted from TARLoco
+#   GaitTerRough: TerAdapt (VQ-VAE codebook alignment)
+#
+# Notes:
+#   The HIM baseline is not registered here because the corresponding
+#   train_him/env_cfg/agent_cfg files are not part of this repository snapshot.
 
 import gymnasium as gym
 
 from . import agents
-
-
-gym.register(
-    id="GaitHimRough",
-    entry_point="isaaclab.envs:ManagerBasedRLEnv",
-    disable_env_checker=True,
-    kwargs={
-        "env_cfg_entry_point": f"{__name__}.him_rough_env_cfg:ThunderGaitHimRoughEnvCfg",
-        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:ThunderGaitHimRoughPPORunnerCfg",
-    },
-)
 
 
 gym.register(

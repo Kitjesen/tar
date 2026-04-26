@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Train TAR official (paper-accurate TARLoco port) on Thunder.
+"""Train the current TAR MLP variant adapted from TARLoco on Thunder.
 
 Usage:
   python scripts/train_tar.py \
@@ -13,7 +13,7 @@ from datetime import datetime
 
 from isaaclab.app import AppLauncher
 
-parser = argparse.ArgumentParser(description="Train TAR official (TARLoco port) on Thunder")
+parser = argparse.ArgumentParser(description="Train the current TAR MLP variant on Thunder")
 parser.add_argument("--video", action="store_true", default=False)
 parser.add_argument("--video_length", type=int, default=200)
 parser.add_argument("--video_interval", type=int, default=2000)
@@ -27,7 +27,7 @@ parser.add_argument("--export_io_descriptors", action="store_true", default=Fals
 # TAR-specific overrides
 parser.add_argument("--num_hist", type=int, default=10, help="Actor history length")
 parser.add_argument("--num_hist_short", type=int, default=4, help="Short history for vel estimator")
-parser.add_argument("--latent_dims", type=int, default=20)
+parser.add_argument("--latent_dims", type=int, default=45, help="Latent size for the current TAR MLP config")
 parser.add_argument("--tar_coef", type=float, default=1.0)
 parser.add_argument("--vel_coef", type=float, default=1.0)
 
@@ -119,8 +119,8 @@ def main(env_cfg, agent_cfg: RslRlOnPolicyRunnerCfg):
         "policy": {
             "num_actions": env.num_actions,
             "init_noise_std": getattr(agent_cfg.policy, "init_noise_std", 1.0),
-            "actor_hidden_dims": list(getattr(agent_cfg.policy, "actor_hidden_dims", [256, 128, 128])),
-            "critic_hidden_dims": list(getattr(agent_cfg.policy, "critic_hidden_dims", [512, 256, 256])),
+            "actor_hidden_dims": list(getattr(agent_cfg.policy, "actor_hidden_dims", [512, 256, 128])),
+            "critic_hidden_dims": list(getattr(agent_cfg.policy, "critic_hidden_dims", [512, 256, 128])),
             "activation": getattr(agent_cfg.policy, "activation", "elu"),
             "num_hist_short": args_cli.num_hist_short,
             "latent_dims": args_cli.latent_dims,
