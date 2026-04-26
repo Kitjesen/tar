@@ -7,11 +7,12 @@ Verifies:
   4. Backward propagates, all gradients non-NaN
 """
 
+import os
 import sys
-sys.path.insert(0, "/home/bsrl/hongsenpang/RLbased/robot_lab/scripts/reinforcement_learning/rsl_rl")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import torch
-from modules.teradapt_actor_critic import TerAdaptActorCritic
+from teradapt.teradapt_actor_critic import TerAdaptActorCritic
 
 # Thunder-sized params
 obs_dim = 57

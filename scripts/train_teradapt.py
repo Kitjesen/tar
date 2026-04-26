@@ -2,7 +2,7 @@
 """Train TerAdapt: VQ-VAE terrain codebook + dual-horizon proprio + PPO.
 
 Usage:
-  python scripts/reinforcement_learning/rsl_rl/train_teradapt.py \
+  python scripts/train_teradapt.py \
       --task GaitTerRough --num_envs 4096 --headless
 """
 
@@ -68,7 +68,7 @@ from isaaclab_tasks.utils.hydra import hydra_task_config
 import robot_lab.tasks  # noqa: F401 -- triggers gym.register for GaitTerRough
 
 # Our TerAdapt runner
-from runners.teradapt_on_policy_runner import TerAdaptOnPolicyRunner
+from teradapt.teradapt_on_policy_runner import TerAdaptOnPolicyRunner
 
 
 @hydra_task_config(args_cli.task, args_cli.agent)

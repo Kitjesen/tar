@@ -79,32 +79,27 @@ Every architecture has **its own** obs layout / training stages / hyperparameter
 
 ```
 tar/
-├── docs/
 ├── reference/
 │   └── TARLoco/                      ← ammousa/TARLoco source (CC-BY-NC-SA 4.0)
-├── scripts/reinforcement_learning/rsl_rl/
-│   ├── modules/
-│   │   ├── tar_actor_critic.py              (paper-accurate TARLoco port)
-│   │   ├── teradapt_tca.py
-│   │   └── teradapt_actor_critic.py
-│   ├── storage/
-│   │   ├── tar_rollout_storage.py
-│   │   └── teradapt_rollout_storage.py
-│   ├── algorithms/
-│   │   ├── tar_ppo.py
-│   │   └── teradapt_ppo.py
-│   ├── runners/
-│   │   ├── tar_on_policy_runner.py
-│   │   └── teradapt_on_policy_runner.py
+├── scripts/
 │   ├── train_tar.py
-│   └── train_teradapt.py
-└── source/robot_lab/robot_lab/tasks/manager_based/locomotion/velocity/config/wheeled/thunder_him_gait/
+│   ├── train_teradapt.py
+│   ├── tar/
+│   │   ├── tar_actor_critic.py              (paper-accurate TARLoco port)
+│   │   ├── tar_ppo.py
+│   │   ├── tar_on_policy_runner.py
+│   │   └── tar_rollout_storage.py
+│   └── teradapt/
+│       ├── teradapt_actor_critic.py
+│       ├── teradapt_tca.py
+│       ├── teradapt_ppo.py
+│       ├── teradapt_on_policy_runner.py
+│       └── teradapt_rollout_storage.py
+└── robot_lab/robot_lab/tasks/manager_based/locomotion/velocity/config/wheeled/thunder_him_gait/
     ├── __init__.py                    ← registers 3 gym tasks
-    ├── him_rough_env_cfg.py
     ├── tar_rough_env_cfg.py
     ├── teradapt_rough_env_cfg.py
     └── agents/
-        ├── rsl_rl_ppo_cfg.py          (HIM)
         ├── rsl_rl_tar_cfg.py
         └── rsl_rl_teradapt_cfg.py
 ```
@@ -115,16 +110,12 @@ tar/
 source ~/miniconda3/etc/profile.d/conda.sh && conda activate thunder
 cd robot_lab
 
-# HIM baseline (existing)
-CUDA_VISIBLE_DEVICES=0 python scripts/reinforcement_learning/rsl_rl/train_him.py \
-    --task RobotLab-Isaac-Velocity-Rough-Thunder-Hist-v0 --num_envs 4096 --headless
-
 # TAR (paper-accurate)
-CUDA_VISIBLE_DEVICES=1 python scripts/reinforcement_learning/rsl_rl/train_tar.py \
+CUDA_VISIBLE_DEVICES=0 python scripts/train_tar.py \
     --task GaitTarRough --num_envs 4096 --headless
 
 # TerAdapt (VQ-VAE)
-CUDA_VISIBLE_DEVICES=2 python scripts/reinforcement_learning/rsl_rl/train_teradapt.py \
+CUDA_VISIBLE_DEVICES=1 python scripts/train_teradapt.py \
     --task GaitTerRough --num_envs 4096 --headless
 ```
 

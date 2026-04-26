@@ -2,7 +2,7 @@
 """Train TAR official (paper-accurate TARLoco port) on Thunder.
 
 Usage:
-  python scripts/reinforcement_learning/rsl_rl/train_tar.py \
+  python scripts/train_tar.py \
       --task GaitTarRough --num_envs 4096 --headless
 """
 
@@ -57,7 +57,7 @@ from isaaclab_tasks.utils.hydra import hydra_task_config
 
 import robot_lab.tasks  # noqa: F401 -- triggers gym.register for GaitTarRough
 
-from runners.tar_on_policy_runner import TAROnPolicyRunner
+from tar.tar_on_policy_runner import TAROnPolicyRunner
 
 
 @hydra_task_config(args_cli.task, args_cli.agent)

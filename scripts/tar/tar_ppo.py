@@ -7,8 +7,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from modules.tar_actor_critic import TARActorCritic
-from storage.tar_rollout_storage import TARRolloutStorage
+from tar.tar_actor_critic import TARActorCritic
+from tar.tar_rollout_storage import TARRolloutStorage
 
 
 class TARPPO:
