@@ -7,6 +7,7 @@ import copy
 
 import isaaclab.envs.mdp as stock_mdp
 import robot_lab.tasks.manager_based.locomotion.velocity.mdp as mdp
+from isaaclab.envs.mdp.curriculums import modify_term_cfg
 from isaaclab.managers import (
     EventTermCfg as EventTerm,
     ObservationGroupCfg as ObsGroup,
@@ -19,6 +20,17 @@ from isaaclab.utils import configclass
 from robot_lab.tasks.manager_based.locomotion.velocity.config.wheeled.thunder_gait.rough_env_cfg import (
     ThunderGaitRoughEnvCfg,
 )
+
+
+def _set_std_after_steps(env, env_ids, data, new_std, num_steps):
+    """One-shot setter: switch tracking-reward `std` to `new_std` after `num_steps`.
+
+    Used to tighten velocity-tracking precision (std √2 → 1.0 → 0.5) on a
+    schedule, after the policy has bootstrapped from-scratch with a wide std.
+    """
+    if env.common_step_counter > num_steps:
+        return new_std
+    return modify_term_cfg.NO_CHANGE
 
 
 @configclass
@@ -292,6 +304,40 @@ class ThunderGaitTerAdaptRoughEnvCfg(ThunderGaitRoughEnvCfg):
                 "velocity_threshold": 0.5,
             },
         )
+
+        # ---- 15. v10 patch (2026-04-28): std curriculum 收紧跟踪精度 ----
+        # 早期 std=√2 ≈ 1.414 给随机策略梯度（err=1 时 reward=0.6，不饿死）。
+        # 学会基础行走后必须收紧到业界标准 std=0.5 (= sqrt(0.25))，否则
+        # err=0.05 与 err=0.3 的 reward 几乎一样高，策略没动力提精度。
+        # 业界标准: Isaac Lab/legged_gym/walk-these-ways/TARLoco 全用 0.5。
+        # 两段课程:
+        #   - 96k step (~2000 iter @ 48): √2  → 1.0 (中间过渡，避免突变)
+        #   - 192k step (~4000 iter @ 48): 1.0 → 0.5 (对齐业界 std=√0.25)
+        for _term in ("track_lin_vel_xy_exp", "track_ang_vel_z_exp"):
+            setattr(
+                self.curriculum,
+                f"{_term}_std_tighten1",
+                CurrTerm(
+                    func=modify_term_cfg,
+                    params={
+                        "address": f"rewards.{_term}.params.std",
+                        "modify_fn": _set_std_after_steps,
+                        "modify_params": {"new_std": 1.0, "num_steps": 96_000},
+                    },
+                ),
+            )
+            setattr(
+                self.curriculum,
+                f"{_term}_std_tighten2",
+                CurrTerm(
+                    func=modify_term_cfg,
+                    params={
+                        "address": f"rewards.{_term}.params.std",
+                        "modify_fn": _set_std_after_steps,
+                        "modify_params": {"new_std": 0.5, "num_steps": 192_000},
+                    },
+                ),
+            )
 
         # ---- 8. Strip any remaining zero-weight rewards ----
         self.disable_zero_weight_rewards()
