@@ -1,4 +1,4 @@
-# TAR · Terrain-Adaptive RL for Thunder Quadruped
+#  Terrain-Adaptive RL for Thunder Quadruped
 
 [![Paper: HIM (RSS 2024)](https://img.shields.io/badge/Paper-arXiv:2312.11460-9cf.svg)](https://arxiv.org/abs/2312.11460)
 [![Paper: TAR (IROS 2025)](https://img.shields.io/badge/Paper-arXiv:2503.20839-9cf.svg)](https://arxiv.org/abs/2503.20839)
