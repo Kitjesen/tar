@@ -6,7 +6,7 @@ Independent from him_/tar_ codebases. TerAdapt (IEEE RA-L 2026, arXiv:2510) core
   - Latent Encoder MLP[64,32]: cat(h^s,h^l)[32] -> l_tilde[16]
   - Velocity Head MLP[64,32]:  cat(h^s,h^l)[32] -> v_hat[3]
   - Token Classifier MLP[64,128]: l_tilde[16] -> logits[N=256]
-  - Actor MLP[512,256,128]: cat(o_t[57], h^s, h^l, l_tilde, v_hat)=109 -> a[16]
+  - Actor MLP[512,256,128]: cat(o_t[57], h^s, h^l, l_tilde, v_hat)=108 -> a[16]
   - Critic MLP[512,256,128]: privileged_obs -> V[1]
   - TCA (teacher): height_scan[187] -> VQ indices (256 codes x 16 dims)
 
@@ -239,7 +239,7 @@ class TerAdaptActorCritic(nn.Module):
         l_tilde = self.latent_enc(feat)          # [B, 16]
         v_hat = self.vel_head(feat)              # [B, 3]
         current_obs = short_obs[:, -self.obs_dim_per_step:]  # [B, 57] - last frame of short
-        actor_in = torch.cat([current_obs, h_s, h_l, l_tilde, v_hat], dim=-1)  # [B, 109]
+        actor_in = torch.cat([current_obs, h_s, h_l, l_tilde, v_hat], dim=-1)  # [B, 108]
         mean = self.actor(actor_in)
         return mean, h_s, h_l, l_tilde, v_hat
 

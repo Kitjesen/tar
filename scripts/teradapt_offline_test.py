@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import torch
 from teradapt.teradapt_actor_critic import TerAdaptActorCritic
+from teradapt.export_teradapt_policy import PolicyExporterTerAdapt
 
 # Thunder-sized params
 obs_dim = 57
@@ -65,6 +66,31 @@ print("\n=== act_inference() ===")
 with torch.no_grad():
     inf = model.act_inference(short_obs, long_obs)
 print(f"act_inference: {tuple(inf.shape)}")
+
+print("\n=== single-input exporter ===")
+history = long_obs.view(B, long_steps, obs_dim)
+short_from_long = long_obs[:, -(obs_dim * short_steps) :]
+with torch.no_grad():
+    inf_from_history = model.act_inference(short_from_long, long_obs)
+exporter = PolicyExporterTerAdapt(model)
+exporter.eval()
+with torch.no_grad():
+    exported_from_history = exporter(history)
+    exported_from_flat = exporter(long_obs)
+print(f"exporter(history): {tuple(exported_from_history.shape)}")
+print(f"exporter(flat):    {tuple(exported_from_flat.shape)}")
+assert torch.allclose(exported_from_history, inf_from_history, atol=1e-6), (
+    "history exporter output differs from act_inference"
+)
+assert torch.allclose(exported_from_flat, inf_from_history, atol=1e-6), (
+    "flat exporter output differs from act_inference"
+)
+scripted_exporter = torch.jit.script(exporter)
+with torch.no_grad():
+    scripted_out = scripted_exporter(history)
+assert torch.allclose(scripted_out, inf_from_history, atol=1e-6), (
+    "scripted exporter output differs from act_inference"
+)
 
 print("\n=== evaluate() ===")
 value = model.evaluate(critic_obs)

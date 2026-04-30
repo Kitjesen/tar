@@ -35,6 +35,10 @@ parser.add_argument("--codebook_dim", type=int, default=16)
 parser.add_argument("--vel_coef", type=float, default=1.0)
 parser.add_argument("--tok_coef", type=float, default=1.0)
 parser.add_argument("--vq_coef", type=float, default=1.0)
+parser.add_argument("--export", action="store_true", default=True,
+                    help="Export single-input TerAdapt JIT and ONNX models before rollout.")
+parser.add_argument("--no_export", action="store_true", default=False,
+                    help="Disable TerAdapt policy export.")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cli_args  # noqa: E402
@@ -45,6 +49,8 @@ args_cli, hydra_args = parser.parse_known_args()
 
 if args_cli.video:
     args_cli.enable_cameras = True
+if args_cli.no_export:
+    args_cli.export = False
 
 sys.argv = [sys.argv[0]] + hydra_args
 
@@ -59,6 +65,7 @@ from isaaclab_tasks.utils import get_checkpoint_path
 from isaaclab_tasks.utils.hydra import hydra_task_config
 
 import robot_lab.tasks  # noqa: F401
+from teradapt.export_teradapt_policy import export_teradapt_policy_as_jit, export_teradapt_policy_as_onnx
 from runners.teradapt_on_policy_runner import TerAdaptOnPolicyRunner
 
 
@@ -184,6 +191,13 @@ def main(env_cfg, agent_cfg: RslRlOnPolicyRunnerCfg):
 
     policy = runner.actor_critic
     policy.eval()
+
+    if args_cli.export:
+        export_model_dir = os.path.join(log_root_path, agent_cfg.load_run, "exported")
+        print(f"\n[INFO] Exporting single-input TerAdapt policy to: {export_model_dir}")
+        export_teradapt_policy_as_jit(policy, path=export_model_dir)
+        export_teradapt_policy_as_onnx(policy, path=export_model_dir)
+        print("[INFO] TerAdapt export complete.")
 
     # Force terrain level across all envs
     if args_cli.force_terrain_level is not None:
