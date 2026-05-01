@@ -20,7 +20,7 @@ class ThunderGaitHimRoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
 
     num_steps_per_env = 48
     max_iterations = 20000
-    save_interval = 500
+    save_interval = 200
     experiment_name = "thunder_gait_him_rough"
     class_name = "OnPolicyRunner"
     obs_groups = {"policy": ["policy"], "critic": ["critic", "height_scan_group"]}
