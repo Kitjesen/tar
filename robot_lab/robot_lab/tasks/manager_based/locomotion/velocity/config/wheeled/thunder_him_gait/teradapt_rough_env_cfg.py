@@ -43,6 +43,10 @@ class ThunderGaitTerAdaptRoughEnvCfg(ThunderGaitRoughEnvCfg):
     def __post_init__(self):
         super().__post_init__()
 
+        # TerAdapt experiment: stiffer hip position control than the shared gait baseline.
+        self.actuator_gains.hip_stiffness = 90.0
+        self.scene.robot.actuators["hip"].stiffness = 90.0
+
         # --- Split policy into short and long history variants ---
         orig_policy = self.observations.policy
         short = copy.deepcopy(orig_policy)
@@ -69,8 +73,8 @@ class ThunderGaitTerAdaptRoughEnvCfg(ThunderGaitRoughEnvCfg):
         r = self.rewards
 
         # ---- 1. Velocity tracking — strong signal preserved (no gait gate) ----
-        r.track_lin_vel_xy_exp.weight = 8.0
-        r.track_ang_vel_z_exp.weight = 3.0
+        r.track_lin_vel_xy_exp.weight = 6.0
+        r.track_ang_vel_z_exp.weight = 2.5
         # 2026-04-25 patch: std 0.5 → sqrt(2.0)=1.414，对齐 orix_dog 标杆
         # 旧 std=0.5 在 cmd=1.5 时 reward=0.001（exp 饱和），策略无梯度信号
         # 新 std=1.414 时 reward=2.6（强 2600 倍），from-scratch 能学
@@ -97,29 +101,29 @@ class ThunderGaitTerAdaptRoughEnvCfg(ThunderGaitRoughEnvCfg):
         # ---- 3. Stability CORE — explicit values (bypass upstream drift) ----
         # Aligned with Unitree B2W reference config for wheeled-legged quadruped
         # 2026-04-26 patch: upward 1.0 → 2.0 (强化直立; b2w 标杆 3.0)
-        r.upward.weight = 2.0
+        r.upward.weight = 2.5
         r.base_height_l2.weight = 0.0            # B2W: disabled
-        # feet_impact_vel: start lenient (-0.5) so policy can explore; curriculum ramps up
-        r.feet_impact_vel.weight = -0.5
+        # feet_impact_vel: hip Kp 90 needs earlier impact control, still ramped gradually.
+        r.feet_impact_vel.weight = -0.75
         r.joint_pos_penalty.weight = -1.0
         r.flat_orientation_l2.weight = 0.0       # B2W: disabled
-        r.lin_vel_z_l2.weight = -2.0
-        r.ang_vel_xy_l2.weight = -0.05           # B2W: -0.05 (was -0.5, too strict for yaw turning)
+        r.lin_vel_z_l2.weight = -2.5
+        r.ang_vel_xy_l2.weight = -0.08           # hip90 retune: slightly tighter roll/pitch-rate damping
         # 2026-04-26 patch: feet_clearance 关闭 (b2w 标杆完全不用此项)
         r.feet_clearance.weight = 0.0
-        r.joint_acc_l2.weight = -1e-7            # B2W: -1e-7 (weakened from -5e-7)
+        r.joint_acc_l2.weight = -2e-7            # hip90 retune: smoother high-gain joint motion
         r.joint_pos_limits.weight = -5.0         # B2W: -5.0 (stricter; was -3.0)
 
         # ---- 4. Energy: add back joint_power (B2W has it), keep adaptive_energy ----
         if hasattr(r, "joint_power") and r.joint_power is not None:
-            r.joint_power.weight = -1e-5         # B2W: -1e-5 (was removed, now restored)
+            r.joint_power.weight = -2e-5         # hip90 retune: discourage high-power transients
         # 2026-04-26 patch: adaptive_energy 关闭 (悬空腿激励主因 — 悬空腿能耗低 → 拿正分)
         if hasattr(r, "adaptive_energy") and r.adaptive_energy is not None:
             r.adaptive_energy.weight = 0.0
 
         # ---- 5. DOF velocity ----
         if hasattr(r, "joint_vel_l2") and r.joint_vel_l2 is not None:
-            r.joint_vel_l2.weight = -5e-6
+            r.joint_vel_l2.weight = -1e-5
 
         # ---- 6. Action smoothness ----
         if hasattr(r, "action_rate_l2") and r.action_rate_l2 is not None:
@@ -138,12 +142,16 @@ class ThunderGaitTerAdaptRoughEnvCfg(ThunderGaitRoughEnvCfg):
         from isaaclab.envs.mdp.curriculums import modify_reward_weight
         self.curriculum.feet_impact_vel_ramp1 = CurrTerm(
             func=modify_reward_weight,
-            params={"term_name": "feet_impact_vel", "weight": -2.0, "num_steps": 48_000},
+            params={"term_name": "feet_impact_vel", "weight": -2.5, "num_steps": 48_000},
         )
         self.curriculum.feet_impact_vel_ramp2 = CurrTerm(
             func=modify_reward_weight,
             params={"term_name": "feet_impact_vel", "weight": -5.0, "num_steps": 144_000},
         )
+
+        # Resume from a late checkpoint should not restart terrain curriculum too low.
+        # ROUGH_TERRAINS_CFG has 10 rows; this samples initial rows from 0..9.
+        self.scene.terrain.max_init_terrain_level = 9
 
         # ---- 10. v5 patch (2026-04-26): 加陡斜坡 + 加大撞地惩罚 ----
         # pyramid_slope (-pyramid_slope_inv): 0.4 rad (23°) → 0.6 rad (34°)
@@ -157,28 +165,31 @@ class ThunderGaitTerAdaptRoughEnvCfg(ThunderGaitRoughEnvCfg):
         # 罚非脚部位（hip, thigh, calf, base）撞地。因 v4 砍掉 feet_clearance，
         # 用"撞地后果"反推策略学习抬脚（轮足踢台阶 → calf 撞 → 痛 → 抬高）
         if hasattr(r, "undesired_contacts") and r.undesired_contacts is not None:
-            r.undesired_contacts.weight = -3.0
+            r.undesired_contacts.weight = -4.0
+        # Hip Kp 90 retune: tighten contact quality without reintroducing gait clocks.
+        if hasattr(r, "feet_stumble") and r.feet_stumble is not None:
+            r.feet_stumble.weight = -6.0
+        if hasattr(r, "feet_slide"):
+            r.feet_slide = None
 
         # ---- 9. Bootstrap loosening (2026-04-25 patch): 让策略先会走 ----
         # 旧 run iter 100+ terr 塌底 → 暴露 PPO 在 teradapt 高维 VQ 空间从随机初始化
         # 找不到"会走"的局部最优。临时放松 stability 约束，2000 iter 后再开。
-        r.joint_pos_limits.weight = -3.0   # 原 -5.0，放松关节边界，鼓励探索
+        r.joint_pos_limits.weight = -4.0   # hip90 retune: stricter than bootstrap, still below -5.0
 
         # 临时关闭这两项（占位 -1e-8 避开 disable_zero_weight_rewards 的 None 化）
         if hasattr(r, "body_orientation_stability") and r.body_orientation_stability is not None:
-            r.body_orientation_stability.weight = -1e-8
-        if hasattr(r, "wheel_lateral_slip") and r.wheel_lateral_slip is not None:
-            r.wheel_lateral_slip.weight = -1e-8
+            r.body_orientation_stability.weight = -0.05
+        if hasattr(r, "wheel_lateral_slip"):
+            r.wheel_lateral_slip = None
 
         # Curriculum: 2000 iter (= 96_000 sim step @ num_steps_per_env=48) 后开回原权重
         self.curriculum.body_orient_open = CurrTerm(
             func=modify_reward_weight,
-            params={"term_name": "body_orientation_stability", "weight": -0.5, "num_steps": 96_000},
+            params={"term_name": "body_orientation_stability", "weight": -0.7, "num_steps": 96_000},
         )
-        self.curriculum.wheel_slip_open = CurrTerm(
-            func=modify_reward_weight,
-            params={"term_name": "wheel_lateral_slip", "weight": -0.5, "num_steps": 96_000},
-        )
+        if hasattr(self.curriculum, "wheel_slip_open"):
+            self.curriculum.wheel_slip_open = None
 
         # ---- 7. Audit print (final state for verification) ----
         print("\n[TerAdapt teradapt] ===== Final reward weights =====")
@@ -201,13 +212,20 @@ class ThunderGaitTerAdaptRoughEnvCfg(ThunderGaitRoughEnvCfg):
             func=mdp.fall_after_stood_up,
             params={
                 "asset_cfg": SceneEntityCfg("robot"),
+                "sensor_cfg": SceneEntityCfg("height_scanner"),
+                "contact_sensor_cfg": SceneEntityCfg("contact_forces", body_names=["base_link"]),
                 "base_height_threshold": 0.30,
                 "gravity_z_threshold": -0.7,
                 "stable_steps": 20,
                 "fall_height_threshold": 0.20,
                 "fall_gravity_z_threshold": 0.5,
+                "side_gravity_z_threshold": -0.1,
+                "base_contact_force_threshold": 5.0,
+                "use_height_fall": False,
             },
         )
+        # 2026-04-29: rough-terrain fall uses orientation/base-contact only.
+        # Height alone over-terminates because valid terrain can sit below world z=0.
 
         # Reset event 清除 has_stood_up latch（每个 episode 重新开始判断）
         self.events.reset_fall_state = EventTerm(
@@ -239,22 +257,23 @@ class ThunderGaitTerAdaptRoughEnvCfg(ThunderGaitRoughEnvCfg):
             "velocity_threshold": 0.5,
             "command_threshold": 0.1,
         }
+        # v10: stand_still_scale 起点 1.0（=运动罚），curriculum 渐进到 4.0
         self.rewards.joint_pos_penalty_hip = RewTerm(
             func=joint_pos_penalty_no_fall_filter,
-            weight=-1.0,
-            params={**_common, "stand_still_scale": 5.0,  # 运动 -1.0, 静止 -5.0
+            weight=-0.8,
+            params={**_common, "stand_still_scale": 1.0,  # ramp 1->4, iter 0~5000
                     "asset_cfg": SceneEntityCfg("robot", joint_names=[".*_hip_joint"])},
         )
         self.rewards.joint_pos_penalty_thigh = RewTerm(
             func=joint_pos_penalty_no_fall_filter,
-            weight=-0.3,
-            params={**_common, "stand_still_scale": 17.0,  # 运动 -0.3, 静止 -5.1
+            weight=-0.5,  # v10b: -0.3 -> -0.5
+            params={**_common, "stand_still_scale": 1.0,
                     "asset_cfg": SceneEntityCfg("robot", joint_names=[".*_thigh_joint"])},
         )
         self.rewards.joint_pos_penalty_calf = RewTerm(
             func=joint_pos_penalty_no_fall_filter,
-            weight=-0.1,
-            params={**_common, "stand_still_scale": 50.0,  # 运动 -0.1, 静止 -5.0
+            weight=-0.5,  # v10b: -0.1 -> -0.5
+            params={**_common, "stand_still_scale": 1.0,
                     "asset_cfg": SceneEntityCfg("robot", joint_names=[".*_calf_joint"])},
         )
 
@@ -283,15 +302,159 @@ class ThunderGaitTerAdaptRoughEnvCfg(ThunderGaitRoughEnvCfg):
         )
         self.rewards.foot_vel_motion_aware = RewTerm(
             func=wheel_vel_motion_aware,
-            weight=-0.05,
+            weight=-0.08,
             params={
                 "command_name": "base_velocity",
                 "asset_cfg": SceneEntityCfg("robot", joint_names=[".*_foot_joint"]),
-                "stand_still_scale": 100.0,  # v9: 20 -> 100 (运动 -0.05, 静止 -5.0)
+                "stand_still_scale": 1.0,  # v10: ramp 1->4 via curriculum
                 "command_threshold": 0.1,
                 "velocity_threshold": 0.5,
             },
         )
+
+        # ---- 15. v10 curriculum: stand_still_scale 1.0 -> 4.0 ramp over ~5000 iter ----
+        # num_steps_per_env=48, 5000 iter = 240_000 common_step_counter
+        from robot_lab.tasks.manager_based.locomotion.velocity.mdp.curriculums import (
+            piecewise_ramp_reward_param,
+            ramp_reward_param,
+        )
+        _RAMP_NUM_STEPS = 240_000  # ~5000 iter
+        for _term_name in (
+            "joint_pos_penalty_hip",
+            "joint_pos_penalty_thigh",
+            "joint_pos_penalty_calf",
+            "foot_vel_motion_aware",
+        ):
+            setattr(
+                self.curriculum,
+                f"{_term_name}_scale_ramp",
+                CurrTerm(
+                    func=ramp_reward_param,
+                    params={
+                        "term_name": _term_name,
+                        "param_name": "stand_still_scale",
+                        "value_start": 1.0,
+                        "value_end": 4.0,  # v10c: 2 -> 4 (恢复原设计)
+                        "num_steps": _RAMP_NUM_STEPS,
+                    },
+                ),
+            )
+
+        # 防扭身体 + 防侧倒：开启 base 平整度惩罚（业界标杆都关，thunder 故意开小值）
+        # 完全直立罚 0，倾斜 45° 罚 -0.25/step，侧倒 90° 罚 -0.5/step
+        if hasattr(r, "flat_orientation_l2") and r.flat_orientation_l2 is not None:
+            r.flat_orientation_l2.weight = -0.5
+
+        # 防扭身体 + 防侧倒：base 平整度惩罚（对齐 humanoid 标杆 -0.2）
+        # 前期 1000 iter 不启用，让策略先学会站立和走路；iter 1000 后开 -0.2
+        # iter 1000 = 48000 common_step_counter (num_steps_per_env=48)
+        if hasattr(r, "flat_orientation_l2") and r.flat_orientation_l2 is not None:
+            r.flat_orientation_l2.weight = -0.02  # keep active before curriculum opens
+        self.curriculum.flat_orientation_open = CurrTerm(
+            func=modify_reward_weight,
+            params={"term_name": "flat_orientation_l2", "weight": -0.25, "num_steps": 48_000},
+        )
+
+        # ---- 16. Wheel-biased retrain override (2026-05-01) ----
+        # The Hist-exact surface learned a visible stepping solution: strong
+        # velocity tracking with too little cost on leg motion.  For this run we
+        # keep TerAdapt observations/TCA, but bias the reward toward rolling on
+        # wheels with quiet legs and cleaner body posture.
+        _wheel_biased_weights = {
+            "lin_vel_z_l2": -2.5,
+            "ang_vel_xy_l2": -0.08,
+            "flat_orientation_l2": -0.02,  # ramps to -0.25 after bootstrap
+            "joint_torques_l2": -1e-5,
+            "joint_vel_l2": -1e-5,
+            "joint_acc_l2": -2.5e-7,
+            "joint_pos_limits": -4.0,
+            "joint_power": -2e-5,
+            "stand_still": -3.0,
+            "joint_mirror": -0.01,
+            "action_rate_l2": -0.01,
+            "undesired_contacts": -4.0,
+            "contact_forces": -3e-4,
+            "track_lin_vel_xy_exp": 6.0,
+            "track_ang_vel_z_exp": 2.5,
+            "feet_contact_without_cmd": 0.0,
+            "feet_stumble": -6.0,
+            "feet_impact_vel": -0.75,
+            "body_orientation_stability": -0.05,
+            "wheel_vel_zero_cmd": -0.08,
+            "upward": 2.5,
+        }
+        for _name, _weight in _wheel_biased_weights.items():
+            _term = getattr(r, _name, None)
+            if _term is not None:
+                _term.weight = _weight
+
+        # Use grouped leg posture penalties instead of one all-leg term.  This
+        # keeps hips/thigh/calf near the nominal stance during commanded motion,
+        # while the existing curriculum makes them stricter at standstill.
+        if hasattr(r, "joint_pos_penalty") and r.joint_pos_penalty is not None:
+            r.joint_pos_penalty.weight = 0.0
+        _grouped_leg_weights = {
+            "joint_pos_penalty_hip": -1.2,
+            "joint_pos_penalty_thigh": -0.8,
+            "joint_pos_penalty_calf": -0.8,
+        }
+        for _name, _weight in _grouped_leg_weights.items():
+            _term = getattr(r, _name, None)
+            if _term is not None:
+                _term.weight = _weight
+                _term.params["stand_still_scale"] = 1.0
+
+        # Tracking accuracy curriculum: keep the wide exponential kernel early
+        # so the randomly initialized policy gets gradient, then tighten it once
+        # locomotion exists.  Step counts assume num_steps_per_env=48.
+        _track_std_schedule = {
+            "value_start": _math.sqrt(2.0),
+            "value_mid": 0.7,
+            "value_end": 0.5,
+            "hold_steps": 48_000,   # 1000 iter
+            "mid_steps": 192_000,   # 4000 iter
+            "end_steps": 384_000,   # 8000 iter
+        }
+        for _term_name in ("track_lin_vel_xy_exp", "track_ang_vel_z_exp"):
+            _term = getattr(r, _term_name, None)
+            if _term is not None:
+                setattr(
+                    self.curriculum,
+                    f"{_term_name}_std_schedule",
+                    CurrTerm(
+                        func=piecewise_ramp_reward_param,
+                        params={
+                            "term_name": _term_name,
+                            "param_name": "std",
+                            **_track_std_schedule,
+                        },
+                    ),
+                )
+
+        # Do not penalize wheel speed while a velocity command is present; that
+        # pushes the policy toward leg stepping.  Keep only the zero-command
+        # wheel brake term from the parent config.
+        if hasattr(r, "foot_vel_penalty"):
+            r.foot_vel_penalty = None
+        if hasattr(r, "foot_vel_motion_aware"):
+            r.foot_vel_motion_aware = None
+        if hasattr(self.curriculum, "foot_vel_motion_aware_scale_ramp"):
+            self.curriculum.foot_vel_motion_aware_scale_ramp = None
+        for _name in ("feet_slide", "wheel_lateral_slip"):
+            if hasattr(r, _name):
+                setattr(r, _name, None)
+        if hasattr(self.curriculum, "wheel_slip_open"):
+            self.curriculum.wheel_slip_open = None
+
+        print("\n[TerAdapt wheel-biased] Applied no-step retrain reward weights")
+        for _name in sorted(_wheel_biased_weights):
+            _term = getattr(r, _name, None)
+            if _term is not None:
+                print(f"  {_name}: {_term.weight}")
+        for _name in sorted(_grouped_leg_weights):
+            _term = getattr(r, _name, None)
+            if _term is not None:
+                print(f"  {_name}: {_term.weight}, stand_still_scale={_term.params['stand_still_scale']}")
 
         # ---- 8. Strip any remaining zero-weight rewards ----
         self.disable_zero_weight_rewards()

@@ -28,14 +28,55 @@ Each architecture has its own observation layout, training stages, and hyperpara
 |---|---|
 | **Task** | `GaitHimRough` |
 | **Entry** | `train_him.py` |
-| **Policy obs** | 5-frame history · 57 dims/frame · [base_ang_vel, projected_gravity, velocity_commands, joint_pos, joint_vel, last_action] |
-| **Critic obs** | 5-frame history · above + base_lin_vel(3) + height_scan(187) + contacts + friction + mass |
+| **Policy obs** | 15-frame history; 57 dims/frame; [base_ang_vel, projected_gravity, velocity_commands, joint_pos, joint_vel, last_action] |
+| **Critic obs** | 15-frame history; base_lin_vel first, then proprio + privileged terms; height_scan remains single-frame |
 | **Loss** | PPO + SwAV contrastive on latent + velocity MSE (concurrent) |
 | **Stage** | Single-stage end-to-end PPO |
-| **PPO** | `num_steps_per_env=48`, `learning_epochs=5`, `mini_batches=4`, `entropy_coef=0.01` |
+| **PPO** | `num_steps_per_env=48`, `learning_epochs=20`, `mini_batches=16`, `entropy_coef=0.005`, `save_interval=200` |
 | **γ / λ / KL** | 0.99 / 0.95 / 0.01 |
 | **max_iterations** | 20000 |
 | **Terrain** | Thunder native rough |
+
+#### Current Thunder Hist Parameter Sync
+
+`GaitHimRough` is pinned to the current Thunder Hist rough settings used in robot_lab:
+
+| Reward / setting | Value |
+|---|---:|
+| `track_lin_vel_xy_exp` | 8.0 |
+| `track_ang_vel_z_exp` | 3.0 |
+| `upward` | 2.0 |
+| `lin_vel_z_l2` | -2.0 |
+| `ang_vel_xy_l2` | -0.05 |
+| `flat_orientation_l2` | -0.1 |
+| `joint_torques_l2` | -1e-5 |
+| `joint_acc_l2` | -2.5e-7 |
+| `joint_pos_limits` | -3.0 |
+| `joint_power` | -2e-5 |
+| `stand_still` | -2.0 |
+| `joint_pos_penalty` | -1.0 |
+| `joint_mirror` | -0.01 |
+| `action_rate_l2` | -0.01 |
+| `undesired_contacts` | -1.0 |
+| `contact_forces` | -0.0003 |
+| `feet_contact_without_cmd` | 0.1 |
+| `feet_stumble` | -5.0 |
+| Mirror pairs | `FR<->FL`, `RR<->RL` for hip/thigh/calf joints |
+
+Zero-weight terms are intentionally disabled by the environment after this sync.
+
+#### Actuator Model Notes
+
+`ImplicitActuatorCfg` 是 PhysX/仿真器内部的隐式关节驱动器。它更像直接给关节一个 PD/速度驱动配置，让物理引擎在求解器内部处理力矩。优点是稳定、简单，适合轮子这种速度驱动关节。
+
+`DCMotorCfg` 是显式直流电机模型。它会更像真实电机那样考虑力矩上限、速度上限、饱和力矩等限制，然后再输出关节驱动力。适合腿部关节这种需要位置控制、PD 刚度和真实力矩限制的关节。
+
+Current Thunder runtime actuator convention:
+
+| Joint group | Actuator | Effort | Velocity | Stiffness | Damping |
+|---|---|---:|---:|---:|---:|
+| hip/thigh/calf | `DCMotorCfg` | 120 | 17.48 | 100 | 5 |
+| wheel/foot | `ImplicitActuatorCfg` | 60 | 16.956 | 0 | 1 |
 
 ---
 
