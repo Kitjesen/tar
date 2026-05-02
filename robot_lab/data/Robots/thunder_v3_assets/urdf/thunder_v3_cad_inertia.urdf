@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <robot name="thunder_v3">
   <link name="base_link">
-        <inertial>
+    <inertial>
       <origin xyz="-0.00111 0.00718 0.07632" rpy="0 0 0" />
       <mass value="18.69147" />
       <inertia ixx="0.24077" ixy="-0.00158" ixz="0.00277" iyy="0.63159" iyz="-0.00895" izz="0.58481" />
@@ -46,12 +46,11 @@
       </geometry>
     </collision>
   </link>
-
   <link name="FR_hip">
-        <inertial>
-      <origin xyz="0.07152 -0.05064 0.00083" rpy="0 0 0" />
-      <mass value="1.66356" />
-      <inertia ixx="0.00688" ixy="0.00652" ixz="-0.00013" iyy="0.01259" iyz="0.00008" izz="0.01604" />
+    <inertial>
+      <origin xyz="0.06964 -0.04836 0.00073" rpy="0 0 0" />
+      <mass value="1.78126" />
+      <inertia ixx="0.00712" ixy="0.00663" ixz="-0.00012" iyy="0.01306" iyz="0.00007" izz="0.01637" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -74,13 +73,13 @@
     <parent link="base_link" />
     <child link="FR_hip" />
     <axis xyz="-1 0 0" />
-    <limit lower="-0.41" upper="0.41" effort="0" velocity="0" />
+    <limit lower="-0.41" upper="0.41" effort="120" velocity="17.48" />
   </joint>
   <link name="FR_thigh">
-        <inertial>
-      <origin xyz="-0.19518 -0.02859 -0.01131" rpy="0 0 0" />
-      <mass value="2.41000" />
-      <inertia ixx="0.00577" ixy="-0.01508" ixz="-0.00665" iyy="0.12042" iyz="-0.00087" izz="0.12014" />
+    <inertial>
+      <origin xyz="-0.19519 -0.02855 -0.01131" rpy="0 0 0" />
+      <mass value="2.40982" />
+      <inertia ixx="0.00576" ixy="-0.01508" ixz="-0.00665" iyy="0.12042" iyz="-0.00087" izz="0.12013" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -115,11 +114,11 @@
     <parent link="FR_hip" />
     <child link="FR_thigh" />
     <axis xyz="0 1 0" />
-    <limit lower="-3.14" upper="0" effort="0" velocity="0" />
+    <limit lower="-3.14" upper="0" effort="120" velocity="17.48" />
   </joint>
   <link name="FR_calf">
-        <inertial>
-      <origin xyz="0.17379 -0.02903 0.03734" rpy="0 0 0" />
+    <inertial>
+      <origin xyz="0.17379 -0.02895 0.03734" rpy="0 0 0" />
       <mass value="1.89384" />
       <inertia ixx="0.00744" ixy="0.01072" ixz="-0.01665" iyy="0.08429" iyz="0.00231" izz="0.08134" />
     </inertial>
@@ -156,13 +155,13 @@
     <parent link="FR_thigh" />
     <child link="FR_calf" />
     <axis xyz="0 1 0" />
-    <limit lower="0" upper="3.14" effort="0" velocity="0" />
+    <limit lower="0" upper="3.14" effort="120" velocity="17.48" />
   </joint>
   <link name="FR_foot">
-        <inertial>
-      <origin xyz="0.00000 -0.01336 0.00000" rpy="0 0 0" />
-      <mass value="0.32377" />
-      <inertia ixx="0.00071" ixy="0.00000" ixz="0.00000" iyy="0.00121" iyz="0.00000" izz="0.00071" />
+    <inertial>
+      <origin xyz="0.00000 -0.01385 0.00000" rpy="0 0 0" />
+      <mass value="1.40377" />
+      <inertia ixx="0.00092" ixy="0.00000" ixz="0.00000" iyy="0.00121" iyz="0.00000" izz="0.00092" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -186,12 +185,11 @@
     <child link="FR_foot" />
     <axis xyz="0 1 0" />
   </joint>
-
   <link name="FL_hip">
-        <inertial>
-      <origin xyz="0.07132 0.05064 0.00088" rpy="0 0 0" />
-      <mass value="1.66356" />
-      <inertia ixx="0.00690" ixy="-0.00654" ixz="-0.00008" iyy="0.01253" iyz="-0.00007" izz="0.01596" />
+    <inertial>
+      <origin xyz="0.06964 0.04836 -0.00073" rpy="0 0 0" />
+      <mass value="1.78126" />
+      <inertia ixx="0.00712" ixy="-0.00663" ixz="0.00012" iyy="0.01306" iyz="0.00007" izz="0.01637" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -214,12 +212,12 @@
     <parent link="base_link" />
     <child link="FL_hip" />
     <axis xyz="-1 0 0" />
-    <limit lower="-0.41" upper="0.41" effort="0" velocity="0" />
+    <limit lower="-0.41" upper="0.41" effort="120" velocity="17.48" />
   </joint>
   <link name="FL_thigh">
-        <inertial>
-      <origin xyz="-0.19482 0.02859 -0.01176" rpy="0 0 0" />
-      <mass value="2.41000" />
+    <inertial>
+      <origin xyz="-0.19484 0.02855 -0.01176" rpy="0 0 0" />
+      <mass value="2.40982" />
       <inertia ixx="0.00584" ixy="0.01503" ixz="-0.00692" iyy="0.12002" iyz="0.00093" izz="0.11966" />
     </inertial>
     <visual>
@@ -255,11 +253,11 @@
     <parent link="FL_hip" />
     <child link="FL_thigh" />
     <axis xyz="0 -1 0" />
-    <limit lower="0" upper="3.14" effort="0" velocity="0" />
+    <limit lower="0" upper="3.14" effort="120" velocity="17.48" />
   </joint>
   <link name="FL_calf">
-        <inertial>
-      <origin xyz="0.17384 0.02903 0.03735" rpy="0 0 0" />
+    <inertial>
+      <origin xyz="0.17384 0.02895 0.03735" rpy="0 0 0" />
       <mass value="1.89384" />
       <inertia ixx="0.00744" ixy="-0.01072" ixz="-0.01666" iyy="0.08434" iyz="-0.00231" izz="0.08139" />
     </inertial>
@@ -296,13 +294,13 @@
     <parent link="FL_thigh" />
     <child link="FL_calf" />
     <axis xyz="0 -1 0" />
-    <limit lower="-3.14" upper="0" effort="0" velocity="0" />
+    <limit lower="-3.14" upper="0" effort="120" velocity="17.48" />
   </joint>
   <link name="FL_foot">
-        <inertial>
-      <origin xyz="0.00000 0.01336 0.00000" rpy="0 0 0" />
-      <mass value="0.32377" />
-      <inertia ixx="0.00071" ixy="0.00000" ixz="0.00000" iyy="0.00121" iyz="0.00000" izz="0.00071" />
+    <inertial>
+      <origin xyz="0.00000 0.01385 0.00000" rpy="0 0 0" />
+      <mass value="1.40377" />
+      <inertia ixx="0.00092" ixy="0.00000" ixz="0.00000" iyy="0.00121" iyz="0.00000" izz="0.00092" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -326,12 +324,11 @@
     <child link="FL_foot" />
     <axis xyz="0 -1 0" />
   </joint>
-
   <link name="RR_hip">
-        <inertial>
-      <origin xyz="-0.07082 -0.05065 0.00038" rpy="0 0 0" />
-      <mass value="1.66356" />
-      <inertia ixx="0.00687" ixy="-0.00650" ixz="0.00004" iyy="0.01240" iyz="0.00005" izz="0.01586" />
+    <inertial>
+      <origin xyz="-0.06964 -0.04836 -0.00073" rpy="0 0 0" />
+      <mass value="1.78126" />
+      <inertia ixx="0.00712" ixy="-0.00663" ixz="-0.00012" iyy="0.01306" iyz="-0.00007" izz="0.01637" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -354,13 +351,13 @@
     <parent link="base_link" />
     <child link="RR_hip" />
     <axis xyz="1 0 0" />
-    <limit lower="-0.41" upper="0.41" effort="0" velocity="0" />
+    <limit lower="-0.41" upper="0.41" effort="120" velocity="17.48" />
   </joint>
   <link name="RR_thigh">
-        <inertial>
-      <origin xyz="0.19475 -0.02849 -0.01303" rpy="0 0 0" />
-      <mass value="2.41000" />
-      <inertia ixx="0.00592" ixy="0.01497" ixz="0.00765" iyy="0.12004" iyz="-0.00100" izz="0.11957" />
+    <inertial>
+      <origin xyz="0.19483 -0.02855 -0.01178" rpy="0 0 0" />
+      <mass value="2.40982" />
+      <inertia ixx="0.00584" ixy="0.01503" ixz="0.00694" iyy="0.12002" iyz="-0.00093" izz="0.11966" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -395,13 +392,13 @@
     <parent link="RR_hip" />
     <child link="RR_thigh" />
     <axis xyz="0 1 0" />
-    <limit lower="0" upper="3.14" effort="0" velocity="0" />
+    <limit lower="0" upper="3.14" effort="120" velocity="17.48" />
   </joint>
   <link name="RR_calf">
-        <inertial>
-      <origin xyz="-0.17337 -0.02935 0.03924" rpy="0 0 0" />
+    <inertial>
+      <origin xyz="-0.17384 -0.02895 0.03735" rpy="0 0 0" />
       <mass value="1.89384" />
-      <inertia ixx="0.00786" ixy="-0.01083" ixz="0.01747" iyy="0.08430" iyz="0.00247" izz="0.08101" />
+      <inertia ixx="0.00744" ixy="-0.01072" ixz="0.01666" iyy="0.08434" iyz="0.00231" izz="0.08139" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -436,13 +433,13 @@
     <parent link="RR_thigh" />
     <child link="RR_calf" />
     <axis xyz="0 1 0" />
-    <limit lower="-6.28" upper="0" effort="0" velocity="0" />
+    <limit lower="-3.14" upper="0" effort="120" velocity="17.48" />
   </joint>
   <link name="RR_foot">
-        <inertial>
-      <origin xyz="0.00000 -0.01336 -0.00011" rpy="0 0 0" />
-      <mass value="0.32377" />
-      <inertia ixx="0.00071" ixy="0.00000" ixz="0.00000" iyy="0.00121" iyz="0.00000" izz="0.00071" />
+    <inertial>
+      <origin xyz="0.00000 -0.01385 0.00000" rpy="0 0 0" />
+      <mass value="1.40377" />
+      <inertia ixx="0.00092" ixy="0.00000" ixz="0.00000" iyy="0.00121" iyz="0.00000" izz="0.00092" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -466,12 +463,11 @@
     <child link="RR_foot" />
     <axis xyz="0 1 0" />
   </joint>
-
   <link name="RL_hip">
-        <inertial>
-      <origin xyz="-0.07136 0.05064 -0.00087" rpy="0 0 0" />
-      <mass value="1.66356" />
-      <inertia ixx="0.00691" ixy="0.00655" ixz="-0.00008" iyy="0.01254" iyz="0.00007" izz="0.01597" />
+    <inertial>
+      <origin xyz="-0.06960 0.04836 0.00075" rpy="0 0 0" />
+      <mass value="1.78126" />
+      <inertia ixx="0.00712" ixy="0.00662" ixz="0.00012" iyy="0.01305" iyz="-0.00007" izz="0.01635" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -494,13 +490,13 @@
     <parent link="base_link" />
     <child link="RL_hip" />
     <axis xyz="1 0 0" />
-    <limit lower="-0.41" upper="0.41" effort="0" velocity="0" />
+    <limit lower="-0.41" upper="0.41" effort="120" velocity="17.48" />
   </joint>
   <link name="RL_thigh">
-        <inertial>
-      <origin xyz="0.19518 0.02859 -0.01131" rpy="0 0 0" />
-      <mass value="2.41000" />
-      <inertia ixx="0.00577" ixy="-0.01508" ixz="0.00665" iyy="0.12042" iyz="0.00087" izz="0.12014" />
+    <inertial>
+      <origin xyz="0.19519 0.02855 -0.01131" rpy="0 0 0" />
+      <mass value="2.40982" />
+      <inertia ixx="0.00576" ixy="-0.01508" ixz="0.00665" iyy="0.12042" iyz="0.00087" izz="0.12013" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -535,13 +531,13 @@
     <parent link="RL_hip" />
     <child link="RL_thigh" />
     <axis xyz="0 -1 0" />
-    <limit lower="-3.14" upper="0" effort="0" velocity="0" />
+    <limit lower="-3.14" upper="0" effort="120" velocity="17.48" />
   </joint>
   <link name="RL_calf">
-        <inertial>
-      <origin xyz="-0.17385 0.02903 0.03733" rpy="0 0 0" />
+    <inertial>
+      <origin xyz="-0.17385 0.02895 0.03733" rpy="0 0 0" />
       <mass value="1.89384" />
-      <inertia ixx="0.00744" ixy="0.01073" ixz="0.01665" iyy="0.08434" iyz="-0.00230" izz="0.08140" />
+      <inertia ixx="0.00744" ixy="0.01073" ixz="0.01665" iyy="0.08434" iyz="-0.00230" izz="0.08139" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -576,13 +572,13 @@
     <parent link="RL_thigh" />
     <child link="RL_calf" />
     <axis xyz="0 -1 0" />
-    <limit lower="0" upper="6.28" effort="0" velocity="0" />
+    <limit lower="0" upper="3.14" effort="120" velocity="17.48" />
   </joint>
   <link name="RL_foot">
-        <inertial>
-      <origin xyz="0.00000 0.01336 0.00000" rpy="0 0 0" />
-      <mass value="0.32377" />
-      <inertia ixx="0.00071" ixy="0.00000" ixz="0.00000" iyy="0.00121" iyz="0.00000" izz="0.00071" />
+    <inertial>
+      <origin xyz="0.00000 0.01385 0.00000" rpy="0 0 0" />
+      <mass value="1.40377" />
+      <inertia ixx="0.00092" ixy="0.00000" ixz="0.00000" iyy="0.00121" iyz="0.00000" izz="0.00092" />
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -606,9 +602,8 @@
     <child link="RL_foot" />
     <axis xyz="0 -1 0" />
   </joint>
-
   <link name="lidar1_Link">
-        <inertial>
+    <inertial>
       <origin xyz="-0.00115 -0.00002 -0.00940" rpy="0 0 0" />
       <mass value="0.05259" />
       <inertia ixx="0.00004" ixy="0.00000" ixz="0.00000" iyy="0.00004" iyz="0.00000" izz="0.00002" />
@@ -629,9 +624,8 @@
     <child link="lidar1_Link" />
     <axis xyz="0 0 0" />
   </joint>
-
   <link name="camera1_Link">
-        <inertial>
+    <inertial>
       <origin xyz="-0.00092 0.00008 -0.01518" rpy="0 0 0" />
       <mass value="0.02011" />
       <inertia ixx="0.00001" ixy="0.00000" ixz="0.00000" iyy="0.00002" iyz="0.00000" izz="0.00001" />
@@ -652,9 +646,8 @@
     <child link="camera1_Link" />
     <axis xyz="0 0 0" />
   </joint>
-
   <link name="lidar2_Link">
-        <inertial>
+    <inertial>
       <origin xyz="-0.00115 -0.00002 -0.00940" rpy="0 0 0" />
       <mass value="0.05259" />
       <inertia ixx="0.00004" ixy="0.00000" ixz="0.00000" iyy="0.00004" iyz="0.00000" izz="0.00002" />
@@ -681,9 +674,8 @@
     <child link="lidar2_Link" />
     <axis xyz="0 0 0" />
   </joint>
-
   <link name="camera2_Link">
-        <inertial>
+    <inertial>
       <origin xyz="-0.00092 -0.00012 -0.01518" rpy="0 0 0" />
       <mass value="0.02011" />
       <inertia ixx="0.00001" ixy="0.00000" ixz="0.00000" iyy="0.00002" iyz="0.00000" izz="0.00001" />
