@@ -4,6 +4,11 @@ from isaaclab.assets.articulation import ArticulationCfg
 
 from robot_lab.assets import ISAACLAB_ASSETS_DATA_DIR
 
+THUNDER_V3_MASS_INERTIA_URDF = (
+    f"{ISAACLAB_ASSETS_DATA_DIR}/Robots/thunder_v3_assets/urdf/"
+    "thunder_v3_cad_inertia.urdf"
+)
+
 OW_WHEELED_LEG_DOG_CFG = ArticulationCfg(
     spawn=sim_utils.UrdfFileCfg(
         fix_base=False,
@@ -153,7 +158,7 @@ THUNDER_CFG = ArticulationCfg(
         fix_base=False,
         merge_fixed_joints=True,
         replace_cylinders_with_capsules=False,
-        asset_path=f"{ISAACLAB_ASSETS_DATA_DIR}/Robots/thunder/urdf/thunder.urdf",
+        asset_path=THUNDER_V3_MASS_INERTIA_URDF,
         activate_contact_sensors=True,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,
@@ -240,7 +245,7 @@ THUNDER_CFG_V1 = ArticulationCfg(
         fix_base=False,
         merge_fixed_joints=True,
         replace_cylinders_with_capsules=False,
-        asset_path=f"{ISAACLAB_ASSETS_DATA_DIR}/Robots/thunder_v3_assets/urdf/thunder_v3.urdf",
+        asset_path=THUNDER_V3_MASS_INERTIA_URDF,
         activate_contact_sensors=True,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,
@@ -326,7 +331,7 @@ THUNDER_NOHEAD_POSE2_CFG = ArticulationCfg(
         fix_base=False,
         merge_fixed_joints=True,
         replace_cylinders_with_capsules=False,
-        asset_path=f"{ISAACLAB_ASSETS_DATA_DIR}/Robots/thunder/urdf/thunder.urdf",
+        asset_path=THUNDER_V3_MASS_INERTIA_URDF,
         activate_contact_sensors=True,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,
